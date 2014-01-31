@@ -29,6 +29,7 @@
 #include "IMGUITools.hpp"
 #include "SoundTools.hpp"
 #include "LightManager.hpp"
+#include "CameraManager.hpp"
 
 #ifndef DEBUG_PRINT
 #define DEBUG_PRINT 1
@@ -57,7 +58,7 @@ int main( int argc, char **argv )
     // INITIALISATION
     //
 
-    int width = 1920, height = 1080;
+    int width = 512, height = 512;
     float widthf = (float) width, heightf = (float) height;
     double t;
     float fps = 0.f;
@@ -70,7 +71,7 @@ int main( int argc, char **argv )
     }
 
     // Open a window and create its OpenGL context
-    if( !glfwOpenWindow( width, height, 0,0,0,0, 24, 0, GLFW_FULLSCREEN ) )
+    if( !glfwOpenWindow( width, height, 0,0,0,0, 24, 0, GLFW_WINDOW ) )
     {
         fprintf( stderr, "Failed to open GLFW window\n" );
 
@@ -107,6 +108,8 @@ int main( int argc, char **argv )
     Camera camera2;
     camera_defaults(camera2);
     Camera currentCamera = camera1;
+
+    CameraManager camMg;
 
     //
     // OPENGL RESOURCES INITIALISATION

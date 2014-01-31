@@ -33,7 +33,7 @@ public:
 		Sound sound;
 		sound.id = idOffset;
 		idOffset++;
-		FMOD_RESULT result = FMOD_System_CreateSound(system, path, FMOD_SOFTWARE | FMOD_2D | FMOD_CREATESTREAM, 0, &sound.sound);
+		FMOD_RESULT result = FMOD_System_CreateSound(system, path, FMOD_SOFTWARE | FMOD_2D | FMOD_CREATESTREAM | FMOD_LOOP_NORMAL, 0, &sound.sound);
 		if (result != FMOD_OK)
 	    {
 	        fprintf(stderr, "Fail to load %s \n", path);
