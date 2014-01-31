@@ -9,12 +9,8 @@
 #include <vector>
 
 #include "glew/glew.h"
-#ifdef __APPLE__
-#include <OpenGL/gl3.h>
-#else
 #include <GL/gl.h>
 #include <GL/glu.h>
-#endif
 
 #include "GL/glfw.h"
 #include "stb/stb_image.h"
@@ -73,14 +69,6 @@ int main( int argc, char **argv )
         exit( EXIT_FAILURE );
     }
 
-    // Force core profile on Mac OSX
-#ifdef __APPLE__
-    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR, 3);
-    glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR, 2);
-    glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-#endif
-
     // Open a window and create its OpenGL context
     if( !glfwOpenWindow( width, height, 0,0,0,0, 24, 0, GLFW_FULLSCREEN ) )
     {
@@ -91,11 +79,6 @@ int main( int argc, char **argv )
     }
     glfwEnable( GLFW_MOUSE_CURSOR );
     glfwSetWindowTitle( "Animus" );
-
-    // Core profile is flagged as experimental in glew
-#ifdef __APPLE__
-    glewExperimental = GL_TRUE;
-#endif
 
     GLenum err = glewInit();
     if (GLEW_OK != err)

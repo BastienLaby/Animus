@@ -31,7 +31,7 @@ ifeq ($(config),debug)
   LDFLAGS   += -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/debug
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/debug/libglfw.a bin/debug/libstb.a bin/debug/libimgui.a
+  LDDEPS    += bin/debug/libglfw.a bin/debug/libglew.a bin/debug/libstb.a bin/debug/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -53,7 +53,7 @@ ifeq ($(config),release)
   LDFLAGS   += -s -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/release
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/release/libglfw.a bin/release/libstb.a bin/release/libimgui.a
+  LDDEPS    += bin/release/libglfw.a bin/release/libglew.a bin/release/libstb.a bin/release/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -75,7 +75,7 @@ ifeq ($(config),debug64)
   LDFLAGS   += -m64 -L/usr/lib64 -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/debug
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/debug/libglfw.a bin/debug/libstb.a bin/debug/libimgui.a
+  LDDEPS    += bin/debug/libglfw.a bin/debug/libglew.a bin/debug/libstb.a bin/debug/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -97,7 +97,7 @@ ifeq ($(config),release64)
   LDFLAGS   += -s -m64 -L/usr/lib64 -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/release
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/release/libglfw.a bin/release/libstb.a bin/release/libimgui.a
+  LDDEPS    += bin/release/libglfw.a bin/release/libglew.a bin/release/libstb.a bin/release/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -119,7 +119,7 @@ ifeq ($(config),debug32)
   LDFLAGS   += -m32 -L/usr/lib32 -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/debug
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/debug/libglfw.a bin/debug/libstb.a bin/debug/libimgui.a
+  LDDEPS    += bin/debug/libglfw.a bin/debug/libglew.a bin/debug/libstb.a bin/debug/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef
@@ -141,7 +141,7 @@ ifeq ($(config),release32)
   LDFLAGS   += -s -m32 -L/usr/lib32 -Llib/stb -Llib/fmod -Llib/glew -Llib/glm -Llib/imgui -Llib/glfw -Llib/fmod/lib -Llib/fmod/inc -Llib/glm/gtx -Llib/glm/detail -Llib/glm/virtrev -Llib/glm/gtc -Llib/glfw/lib -Llib/glfw/include -Llib/glfw/lib/x11 -Llib/glfw/lib/carbon -Llib/glfw/lib/cocoa -Llib/glfw/lib/win32 -Llib/glfw/include/GL -Lbin/release
   LIBS      += -lglfw -lglew -lstb -limgui -lX11 -lXrandr -lrt -lGL -lGLU -lpthread -lfmodex64
   RESFLAGS  += $(DEFINES) $(INCLUDES) 
-  LDDEPS    += bin/release/libglfw.a bin/release/libstb.a bin/release/libimgui.a
+  LDDEPS    += bin/release/libglfw.a bin/release/libglew.a bin/release/libstb.a bin/release/libimgui.a
   LINKCMD    = $(CXX) -o $(TARGET) $(OBJECTS) $(LDFLAGS) $(RESOURCES) $(ARCH) $(LIBS)
   define PREBUILDCMDS
   endef

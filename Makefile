@@ -6,19 +6,23 @@ ifndef config
 endif
 export config
 
-PROJECTS := Animus glfw imgui stb
+PROJECTS := Animus glfw glew imgui stb
 
 .PHONY: all clean help $(PROJECTS)
 
 all: $(PROJECTS)
 
-Animus: glfw stb imgui
+Animus: glfw glew stb imgui
 	@echo "==== Building Animus ($(config)) ===="
 	@${MAKE} --no-print-directory -C . -f Animus.make
 
 glfw: 
 	@echo "==== Building glfw ($(config)) ===="
 	@${MAKE} --no-print-directory -C . -f glfw.make
+
+glew: 
+	@echo "==== Building glew ($(config)) ===="
+	@${MAKE} --no-print-directory -C . -f glew.make
 
 imgui: 
 	@echo "==== Building imgui ($(config)) ===="
@@ -31,6 +35,7 @@ stb:
 clean:
 	@${MAKE} --no-print-directory -C . -f Animus.make clean
 	@${MAKE} --no-print-directory -C . -f glfw.make clean
+	@${MAKE} --no-print-directory -C . -f glew.make clean
 	@${MAKE} --no-print-directory -C . -f imgui.make clean
 	@${MAKE} --no-print-directory -C . -f stb.make clean
 
@@ -50,6 +55,7 @@ help:
 	@echo "   clean"
 	@echo "   Animus"
 	@echo "   glfw"
+	@echo "   glew"
 	@echo "   imgui"
 	@echo "   stb"
 	@echo ""

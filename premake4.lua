@@ -67,7 +67,25 @@ solution "advanced_opengl_imac3_exercises"
          flags { "Optimize" }    
          targetdir "bin/release"
 
+
    -- GLEW Library         
+   project "glew"
+      kind "StaticLib"
+      language "C"
+      files {"lib/glew/*.c", "lib/glew/*.h"}
+      defines { "GLEW_STATIC" }
+
+      configuration "Debug"
+         defines { "DEBUG" }
+         flags { "Symbols" }
+         targetdir "bin/debug"
+
+      configuration "Release"
+         defines { "NDEBUG" }
+         flags { "Optimize" }    
+         targetdir "bin/release"
+
+   -- IMGUI library         
    project "imgui"
       kind "StaticLib"
       language "C"
