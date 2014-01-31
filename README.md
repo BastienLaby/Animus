@@ -22,6 +22,12 @@ Installation (linux only)
   Run the project :
   > ./Animusd
 
-Coming features :
-  - Camera Managin [OK]
+Coming soon features :
+  - Camera Managing [OK]
   - Light Improvment (just pointLight for now)
+  - Fullscreen switch button
+  - Sound interface loading
+
+Coming not soon features :
+  - Shapes management
+  - Improved animation management
