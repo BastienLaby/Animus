@@ -18,7 +18,7 @@ class CameraManager
 	};
 
 	std::vector<Camera> m_cameras;
-	Camera* m_pCurrentCamera;
+	size_t m_currentCameraIndex;
 	unsigned int m_nbCameras;
 
 	void camera_compute(Camera & c)
@@ -39,7 +39,7 @@ class CameraManager
 
 public:
 
-	CameraManager() : m_pCurrentCamera(NULL), m_nbCameras(0) {}
+	CameraManager() : m_nbCameras(0) {}
 
 	unsigned int createCamera()
 	{
@@ -70,20 +70,33 @@ public:
 			if(id == m_cameras[t].id)
 			{
 				validID = true;
+				m_currentCameraIndex = t;
 				break;
 			}
 		}
 		if(validID)
 		{
-			m_pCurrentCamera = &m_cameras[id];
 			std::cout << "Switch to camera " << id << std::endl;
 		}
 		else
 		{
 			std::cout << "Impossible to switch to the camera " << id << " because its doesn't exist." << std::endl;
 		}
-		
 	}
+
+	void zoomCurrentCamera(float factor)
+	{
+		Camera& c = m_cameras[m_currentCameraIndex];
+	    c.radius += factor * c.radius ;
+	    if (c.radius < 0.1)
+	    {
+	        c.radius = 10.f;
+	        c.o = c.eye + glm::normalize(c.o - c.eye) * c.radius;
+	    }
+	    camera_compute(c);
+	}
+
+
 
 
 };

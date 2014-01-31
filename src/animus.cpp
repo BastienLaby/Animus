@@ -94,8 +94,6 @@ int main( int argc, char **argv )
 
     // Enable vertical sync (on cards that support it)
     glfwSwapInterval( 1 );
-    GLenum glerr = GL_NO_ERROR;
-    glerr = glGetError();
 
     // Init imgui
     init_imgui();
@@ -111,8 +109,8 @@ int main( int argc, char **argv )
 
     CameraManager camMg;
     int cameraID = camMg.createCamera();
-    int cameraID2 = camMg.createCamera();
     camMg.switchTo(cameraID);
+    camMg.zoomCurrentCamera(5.f);
     camMg.removeCamera(cameraID);
 
     //
@@ -311,8 +309,6 @@ int main( int argc, char **argv )
     LightManager lightManager;
 
     // Animation Data
-    float timeStep = 0.1f;
-    float timeSpend = 0.f;
     int spectrumStepLoop = 0;
 
     // GUI Data
@@ -330,8 +326,6 @@ int main( int argc, char **argv )
     unsigned int currentSpectrumSize = maxSpectrumSize;
 
     int spaceKeyState = glfwGetKey(GLFW_KEY_SPACE);
-
-    int maxBarHeight = 0;
 
     do
     {
