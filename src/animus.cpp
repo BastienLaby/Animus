@@ -101,17 +101,11 @@ int main( int argc, char **argv )
     init_gui_states(guiStates);
 
     // Init viewer structures
-    Camera camera1;
-    camera_defaults(camera1);
-    Camera camera2;
-    camera_defaults(camera2);
-    Camera currentCamera = camera1;
-
-    CameraManager camMg;
-    int cameraID = camMg.createCamera();
-    camMg.switchTo(cameraID);
-    camMg.zoomCurrentCamera(5.f);
-    camMg.removeCamera(cameraID);
+    CameraManager cammg;
+    int idCam1 = cammg.createCamera();
+    int idCam2 = cammg.createCamera();
+    int idCam3 = cammg.createCamera();
+    cammg.switchTo(idCam1);
 
     //
     // OPENGL RESOURCES INITIALISATION
@@ -380,18 +374,16 @@ int main( int argc, char **argv )
                     zoomDir = -1.f;
                 else if (diffLockPositionX < 0 )
                     zoomDir = 1.f;
-                camera_zoom(currentCamera, zoomDir * GUIStates::MOUSE_ZOOM_SPEED);
+                cammg.zoom(zoomDir * GUIStates::MOUSE_ZOOM_SPEED);
             }
             else if (guiStates.turnLock)
             {
-                camera_turn(currentCamera, diffLockPositionY * GUIStates::MOUSE_TURN_SPEED,
-                            diffLockPositionX * GUIStates::MOUSE_TURN_SPEED);
+                cammg.turn(diffLockPositionY * GUIStates::MOUSE_TURN_SPEED, diffLockPositionX * GUIStates::MOUSE_TURN_SPEED);
 
             }
             else if (guiStates.panLock)
             {
-                camera_pan(currentCamera, diffLockPositionX * GUIStates::MOUSE_PAN_SPEED,
-                            diffLockPositionY * GUIStates::MOUSE_PAN_SPEED);
+                cammg.pan(diffLockPositionX * GUIStates::MOUSE_PAN_SPEED, diffLockPositionY * GUIStates::MOUSE_PAN_SPEED);
             }
             guiStates.lockPositionX = mousex;
             guiStates.lockPositionY = mousey;
@@ -399,7 +391,7 @@ int main( int argc, char **argv )
   
         // Get camera matrices
         glm::mat4 projection = glm::perspective(45.0f, widthf / heightf, 0.1f, 1000.f); 
-        glm::mat4 worldToView = glm::lookAt(currentCamera.eye, currentCamera.o, currentCamera.up);
+        glm::mat4 worldToView = glm::lookAt(cammg.getEye(), cammg.getOrigin(), cammg.getUp());
         glm::mat4 objectToWorld;
         glm::mat4 worldToScreen = projection * worldToView;
         glm::mat4 screenToWorld = glm::transpose(glm::inverse(worldToScreen));
@@ -493,7 +485,7 @@ int main( int argc, char **argv )
         glUniform1i(lighting_materialLocation, 0);
         glUniform1i(lighting_normalLocation, 1);
         glUniform1i(lighting_depthLocation, 2);
-        glUniform3fv(lighting_cameraPositionLocation, 1, glm::value_ptr(currentCamera.eye));
+        glUniform3fv(lighting_cameraPositionLocation, 1, glm::value_ptr(cammg.getEye()));
         glUniformMatrix4fv(lighting_inverseViewProjectionLocation, 1, 0, glm::value_ptr(screenToWorld));
         glUniform1f(lighting_timeLocation, t);
 
@@ -590,14 +582,15 @@ int main( int argc, char **argv )
 
             int buttonCamera1 = imguiButton("Camera1");
             int buttonCamera2 = imguiButton("Camera2");
+            int buttonCamera3 = imguiButton("Camera3");
             if(buttonCamera1) {
-                camera2 = currentCamera;
-                currentCamera = camera1;
-            }
-                
+                cammg.switchTo(idCam1);
+            } 
             if(buttonCamera2) {
-                camera1 = currentCamera;
-                currentCamera = camera2;
+                cammg.switchTo(idCam2);
+            }
+            if(buttonCamera3) {
+                cammg.switchTo(idCam3);
             }
                 
 

@@ -84,7 +84,7 @@ public:
 		}
 	}
 
-	void zoomCurrentCamera(float factor)
+	void zoom(float factor)
 	{
 		Camera& c = m_cameras[m_currentCameraIndex];
 	    c.radius += factor * c.radius ;
@@ -94,6 +94,49 @@ public:
 	        c.o = c.eye + glm::normalize(c.o - c.eye) * c.radius;
 	    }
 	    camera_compute(c);
+	}
+
+	void turn(float phi, float theta)
+	{
+		Camera& c = m_cameras[m_currentCameraIndex];
+		c.theta += 1.f * theta;
+	    c.phi   -= 1.f * phi;
+	    if (c.phi >= (2 * M_PI) - 0.1 )
+	        c.phi = 0.00001;
+	    else if (c.phi <= 0 )
+	        c.phi = 2 * M_PI - 0.1;
+	    camera_compute(c);
+	}
+
+	void pan(float x, float y)
+	{
+		Camera& c = m_cameras[m_currentCameraIndex];
+		glm::vec3 up(0.f, c.phi < M_PI ?1.f:-1.f, 0.f);
+		glm::vec3 fwd = glm::normalize(c.o - c.eye);
+		glm::vec3 side = glm::normalize(glm::cross(fwd, up));
+		c.up = glm::normalize(glm::cross(side, fwd));
+		c.o[0] += up[0] * y * c.radius * 2;
+		c.o[1] += up[1] * y * c.radius * 2;
+		c.o[2] += up[2] * y * c.radius * 2;
+		c.o[0] -= side[0] * x * c.radius * 2;
+		c.o[1] -= side[1] * x * c.radius * 2;
+		c.o[2] -= side[2] * x * c.radius * 2;       
+		camera_compute(c);
+	}
+
+	glm::vec3 getEye() const
+	{
+		return m_cameras[m_currentCameraIndex].eye;
+	}
+
+	glm::vec3 getOrigin() const
+	{
+		return m_cameras[m_currentCameraIndex].o;
+	}
+
+	glm::vec3 getUp() const
+	{
+		return m_cameras[m_currentCameraIndex].up;
 	}
 
 
