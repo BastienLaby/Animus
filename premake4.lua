@@ -1,4 +1,4 @@
-solution "advanced_opengl_imac3_exercises"
+solution "AnimusSolution"
    configurations { "Debug", "Release" }
    platforms {"native", "x64", "x32"}
 
@@ -14,7 +14,6 @@ solution "advanced_opengl_imac3_exercises"
      
       configuration { "linux" }
          links {"X11","Xrandr", "rt", "GL", "GLU", "pthread", "fmodex64"}
-
        
       configuration { "windows" }
          links {"glu32","opengl32", "gdi32", "winmm", "user32"}
@@ -44,18 +43,6 @@ solution "advanced_opengl_imac3_exercises"
          includedirs { "lib/glfw/lib/x11" }
          defines { "_GLFW_USE_LINUX_JOYSTICKS", "_GLFW_HAS_XRANDR", "_GLFW_HAS_PTHREAD" ,"_GLFW_HAS_SCHED_YIELD", "_GLFW_HAS_GLXGETPROCADDRESS" }
          buildoptions { "-pthread" }
-       
-      configuration {"windows"}
-         files { "lib/glfw/lib/win32/*.c", "lib/glfw/win32/*.h" }
-         includedirs { "lib/glfw/lib/win32" }
-         defines { "_GLFW_USE_LINUX_JOYSTICKS", "_GLFW_HAS_XRANDR", "_GLFW_HAS_PTHREAD" ,"_GLFW_HAS_SCHED_YIELD", "_GLFW_HAS_GLXGETPROCADDRESS" }
-       
-      configuration {"Macosx"}
-         files { "lib/glfw/lib/cocoa/*.c", "lib/glfw/lib/cocoa/*.h", "lib/glfw/lib/cocoa/*.m" }
-         includedirs { "lib/glfw/lib/cocoa" }
-         defines { }
-         buildoptions { " -fno-common" }
-         linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit" }
 
       configuration "Debug"
          defines { "DEBUG" }
@@ -66,7 +53,6 @@ solution "advanced_opengl_imac3_exercises"
          defines { "NDEBUG" }
          flags { "Optimize" }    
          targetdir "bin/release"
-
 
    -- GLEW Library         
    project "glew"
