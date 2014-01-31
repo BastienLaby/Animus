@@ -18,6 +18,7 @@ class CameraManager
 	};
 
 	std::vector<Camera> m_cameras;
+	Camera* m_pCurrentCamera;
 	unsigned int m_nbCameras;
 
 	void camera_compute(Camera & c)
@@ -38,7 +39,7 @@ class CameraManager
 
 public:
 
-	CameraManager() : m_nbCameras(0) {}
+	CameraManager() : m_pCurrentCamera(NULL), m_nbCameras(0) {}
 
 	unsigned int createCamera()
 	{
@@ -59,6 +60,29 @@ public:
 				m_cameras.erase(m_cameras.begin() + t);
 			}
 		}
+	}
+
+	void switchTo(unsigned int id)
+	{
+		bool validID = false;
+		for(size_t t = 0; t < m_cameras.size(); t++)
+		{
+			if(id == m_cameras[t].id)
+			{
+				validID = true;
+				break;
+			}
+		}
+		if(validID)
+		{
+			m_pCurrentCamera = &m_cameras[id];
+			std::cout << "Switch to camera " << id << std::endl;
+		}
+		else
+		{
+			std::cout << "Impossible to switch to the camera " << id << " because its doesn't exist." << std::endl;
+		}
+		
 	}
 
 

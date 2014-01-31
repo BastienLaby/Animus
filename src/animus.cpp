@@ -110,6 +110,10 @@ int main( int argc, char **argv )
     Camera currentCamera = camera1;
 
     CameraManager camMg;
+    int cameraID = camMg.createCamera();
+    int cameraID2 = camMg.createCamera();
+    camMg.switchTo(cameraID);
+    camMg.removeCamera(cameraID);
 
     //
     // OPENGL RESOURCES INITIALISATION
