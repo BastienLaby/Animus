@@ -20,9 +20,11 @@
 *.out
 *.app
 
-# BInairies
+# Binairies
 obj/*
 bin/*
+Animusd
 
 # Premake files
 *.make
+Makefile
