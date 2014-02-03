@@ -234,7 +234,7 @@ int main( int argc, char **argv )
         exit( EXIT_FAILURE );
     }    
 
-    /*GLuint spotlight_materialLocation = glGetUniformLocation(spotlight_shader.program, "Material");
+    GLuint spotlight_materialLocation = glGetUniformLocation(spotlight_shader.program, "Material");
     GLuint spotlight_normalLocation = glGetUniformLocation(spotlight_shader.program, "Normal");
     GLuint spotlight_depthLocation = glGetUniformLocation(spotlight_shader.program, "Depth");
     GLuint spotlight_timeLocation = glGetUniformLocation(spotlight_shader.program, "Time");
@@ -243,11 +243,11 @@ int main( int argc, char **argv )
     GLuint spotlight_lightPositionLocation = glGetUniformLocation(spotlight_shader.program, "LightPosition");
     GLuint spotlight_lightDirectionLocation = glGetUniformLocation(spotlight_shader.program, "LightDirection");
     GLuint spotlight_lightDiffuseColorLocation = glGetUniformLocation(spotlight_shader.program, "LightDiffuseColor");
-    GLuint spotlight_lightSpecularColorLocation = glGetUniformLocation(spotlight_shader.program, "LightSpecColor");
+    GLuint spotlight_lightSpecularColorLocation = glGetUniformLocation(spotlight_shader.program, "LightSpecularColor");
     GLuint spotlight_lightIntensityLocation = glGetUniformLocation(spotlight_shader.program, "LightIntensity");
     GLuint spotlight_lightExternalAngleLocation = glGetUniformLocation(spotlight_shader.program, "LightExternalAngle");
     GLuint spotlight_lightInternalAngleLocation = glGetUniformLocation(spotlight_shader.program, "LightInternalAngle");
-    GLuint spotlight_projectionLocation = glGetUniformLocation(spotlight_shader.program, "Projection");*/
+    GLuint spotlight_projectionLocation = glGetUniformLocation(spotlight_shader.program, "Projection");
 
     // Load geometry
     int   cube_triangleCount = 12;
@@ -401,8 +401,6 @@ int main( int argc, char **argv )
     unsigned int currentSpectrumSize = maxSpectrumSize;
 
     int spaceKeyState = glfwGetKey(GLFW_KEY_SPACE);
-
-    lightManager.addDirLight(glm::vec3(0, -1, 0), glm::vec3(1, 1, 1), glm::vec3(1, 1, 0), 0.6f, true);
 
     do
     {
@@ -624,6 +622,37 @@ int main( int argc, char **argv )
             glDrawElements(GL_TRIANGLES, quad_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
         }
 
+        // SpotLights
+
+        glUseProgram(spotlight_shader.program);
+        glUniformMatrix4fv(spotlight_projectionLocation, 1, 0, glm::value_ptr(projection));
+        glUniform1i(spotlight_materialLocation, 0);
+        glUniform1i(spotlight_normalLocation, 1);
+        glUniform1i(spotlight_depthLocation, 2);
+        glUniform3fv(spotlight_cameraPositionLocation, 1, glm::value_ptr(cammg.getEye()));
+        glUniformMatrix4fv(spotlight_inverseViewProjectionLocation, 1, 0, glm::value_ptr(screenToWorld));
+        glUniform1f(spotlight_timeLocation, t);
+
+        for (unsigned int i = 0; i < lightManager.getNumSpotLight(); ++i)
+        {
+            glm::vec3 pos = lightManager.getSPLPosition(i);
+            glm::vec3 dir = lightManager.getSPLDirection(i);
+            glm::vec3 diff = lightManager.getSPLDiffuse(i);
+            glm::vec3 spec = lightManager.getSPLSpec(i);
+            float lightPosition[3] = {pos.x, pos.y, pos.z};
+            float lightDirection[3] = {dir.x, dir.y, dir.z};
+            float lightDiffuseColor[3] = {diff.r, diff.g, diff.b};
+            float lightSpecColor[3] = {spec.r, spec.g, spec.b};
+            glUniform3fv(spotlight_lightPositionLocation, 1, lightPosition);
+            glUniform3fv(spotlight_lightDirectionLocation, 1, lightDirection);
+            glUniform3fv(spotlight_lightDiffuseColorLocation, 1, lightDiffuseColor);
+            glUniform3fv(spotlight_lightSpecularColorLocation, 1, lightSpecColor);
+            glUniform1f(spotlight_lightIntensityLocation, lightManager.getSPLIntensity(i));
+            glUniform1f(spotlight_lightExternalAngleLocation, lightManager.getSPLExternalAngle(i));
+            glUniform1f(spotlight_lightInternalAngleLocation, lightManager.getSPLInternalAngle(i));
+            glDrawElements(GL_TRIANGLES, quad_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
+        }
+
         glDisable(GL_BLEND);
 
         //
@@ -716,11 +745,10 @@ int main( int argc, char **argv )
             {
                 unsigned int nbL = lightManager.getNumPointLight();
                 srand(time(NULL));
-                lightManager.addPointLight( glm::vec3(0, nbL*2, 5),
+                lightManager.addPointLight( glm::vec3(0, 15, 5),
                                             glm::vec3(cos(nbL), sin(nbL), 1),
                                             glm::vec3(1, 1, 1),
-                                            5.f,
-                                            false);
+                                            5.f);
             }
 
             for (unsigned int i = 0; i < lightManager.getNumPointLight(); ++i)
@@ -737,9 +765,9 @@ int main( int argc, char **argv )
                         imguiLabel("Position :");
                         imguiIndent();
                             glm::vec3 pos = lightManager.getPLPosition(i);
-                            imguiSlider("x", &pos.x, -10, 10, 0.01);
-                            imguiSlider("y", &pos.y, -10, 10, 0.01);
-                            imguiSlider("z", &pos.z, -10, 10, 0.01);
+                            imguiSlider("x", &pos.x, -30, 30, 0.1);
+                            imguiSlider("y", &pos.y, -30, 30, 0.1);
+                            imguiSlider("z", &pos.z, -30, 30, 0.1);
                             lightManager.setPLPosition(i, pos);
                         imguiUnindent();
                         imguiLabel("Diffuse :");
@@ -773,10 +801,9 @@ int main( int argc, char **argv )
             {
                 unsigned int nbL = lightManager.getNumDirLight();
                 lightManager.addDirLight( glm::vec3(0.5, -0.5, -0.5),
-                                            glm::vec3(cos(nbL), sin(nbL), 1),
                                             glm::vec3(1, 1, 1),
-                                            1.f,
-                                            false);
+                                            glm::vec3(1, 1, 0.5),
+                                            0.6f);
             }
 
             for (unsigned int i = 0; i < lightManager.getNumDirLight(); ++i)
@@ -793,9 +820,9 @@ int main( int argc, char **argv )
                         imguiLabel("Direction :");
                         imguiIndent();
                             glm::vec3 dir = lightManager.getDLDirection(i);
-                            imguiSlider("x", &dir.x, -10, 10, 0.01);
-                            imguiSlider("y", &dir.y, -10, 10, 0.01);
-                            imguiSlider("z", &dir.z, -10, 10, 0.01);
+                            imguiSlider("x", &dir.x, -30, 30, 0.1);
+                            imguiSlider("y", &dir.y, -30, 30, 0.1);
+                            imguiSlider("z", &dir.z, -30, 30, 0.1);
                             lightManager.setDLDirection(i, dir);
                         imguiUnindent();
                         imguiLabel("Diffuse :");
@@ -820,6 +847,76 @@ int main( int argc, char **argv )
                     imguiUnindent();
                 }
                 if(toggle) { lightManager.setDLCollapse(i, !lightManager.getDLCollapse(i)); }
+            }
+
+            imguiSeparatorLine();
+
+            int button_addSPL = imguiButton("Add SpotLight");
+            if(button_addSPL)
+            {
+                unsigned int nbL = lightManager.getNumSpotLight();
+                lightManager.addSpotLight( glm::vec3(5, 5, 5),
+                                            glm::vec3(-1, -1, -1),
+                                            glm::vec3(1, 1, 0),
+                                            glm::vec3(1, 0, 1),
+                                            2.f,
+                                            1.f,
+                                            1.f);
+            }
+
+            for (unsigned int i = 0; i < lightManager.getNumSpotLight(); ++i)
+            {
+                std::ostringstream ss;
+                ss << (i+1);
+                std::string s(ss.str());
+                int toggle = imguiCollapse("Spot Light", s.c_str(), lightManager.getSPLCollapse(i));
+                if(lightManager.getSPLCollapse(i))
+                {
+                    imguiIndent();
+                        float intens = lightManager.getSPLIntensity(i);
+                        imguiSlider("Intensity", &intens, 0, 10, 0.1); lightManager.setSPLIntensity(i, intens);
+                        imguiLabel("Position :");
+                        imguiIndent();
+                            glm::vec3 pos = lightManager.getSPLPosition(i);
+                            imguiSlider("x", &pos.x, -30, 30, 0.1);
+                            imguiSlider("y", &pos.y, -30, 30, 0.1);
+                            imguiSlider("z", &pos.z, -30, 30, 0.1);
+                            lightManager.setSPLPosition(i, pos);
+                        imguiUnindent();
+                        imguiLabel("Direction :");
+                        imguiIndent();
+                            glm::vec3 dir = lightManager.getSPLDirection(i);
+                            imguiSlider("x", &dir.x, -1, 1, 0.01);
+                            imguiSlider("y", &dir.y, -1, 1, 0.01);
+                            imguiSlider("z", &dir.z, -1, 1, 0.01);
+                            lightManager.setSPLDirection(i, dir);
+                        imguiUnindent();
+                        imguiLabel("Diffuse :");
+                        imguiIndent();
+                            glm::vec3 diff = lightManager.getSPLDiffuse(i);
+                            imguiSlider("r", &diff.x, 0, 1, 0.01);
+                            imguiSlider("g", &diff.y, 0, 1, 0.01);
+                            imguiSlider("b", &diff.z, 0, 1, 0.01);
+                            lightManager.setSPLDiffuse(i, diff);
+                        imguiUnindent();
+                        imguiLabel("Specular :");
+                        imguiIndent();
+                            glm::vec3 spec = lightManager.getSPLSpec(i);
+                            imguiSlider("r", &spec.x, 0, 1, 0.01);
+                            imguiSlider("g", &spec.y, 0, 1, 0.01);
+                            imguiSlider("b", &spec.z, 0, 1, 0.01);
+                            lightManager.setSPLSpec(i, spec);
+                        imguiUnindent();
+                        float extangle = lightManager.getSPLExternalAngle(i);
+                        imguiSlider("External angle", &extangle, 0, 2, 0.01); lightManager.setSPLExternalAngle(i, extangle);
+                        float intangle = lightManager.getSPLInternalAngle(i);
+                        imguiSlider("Internal angle", &intangle, 0, 2, 0.01); lightManager.setSPLInternalAngle(i, intangle);
+                        int removeLight = imguiButton("Remove"); 
+                        if(removeLight)
+                            lightManager.removeSpotLight(i);
+                    imguiUnindent();
+                }
+                if(toggle) { lightManager.setSPLCollapse(i, !lightManager.getSPLCollapse(i)); }
             }
 
             imguiEndScrollArea();

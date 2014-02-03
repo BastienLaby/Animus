@@ -38,16 +38,17 @@ struct SpotLight
 	float extangle;
 	float intangle;
 	bool guicollapse;
-	SpotLight(glm::vec3 dir, glm::vec3 dif, glm::vec3 spec, float inte, bool coll) : dir(dir), diffcolor(dif), speccolor(spec), intensity(inte), guicollapse(coll) {}
+	SpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 dif, glm::vec3 spec, float intensity, float extA, float intA, float inte, bool coll)
+		: pos(pos), dir(dir), diffcolor(dif), speccolor(spec), intensity(inte), extangle(extA), intangle(intA), guicollapse(coll) {}
 };
 
 public:
 
 	LightManager() {}
 
-	void addPointLight(glm::vec3 pos, glm::vec3 diffColor, glm::vec3 specColor, float intensity, bool uiCollapse)
+	void addPointLight(glm::vec3 pos, glm::vec3 diffColor, glm::vec3 specColor, float intensity)
 	{
-		PointLight p(pos, diffColor, specColor, intensity, uiCollapse);
+		PointLight p(pos, diffColor, specColor, intensity, true);
 		m_pointLights.push_back(p);
 	}
 
@@ -70,9 +71,9 @@ public:
 	float getPLIntensity(size_t i) const { return m_pointLights[i].intensity; }
 	bool getPLCollapse(size_t i) const { return m_pointLights[i].guicollapse; }
 
-	void addDirLight(glm::vec3 dir, glm::vec3 diffColor, glm::vec3 specColor, float intensity, bool uiCollapse)
+	void addDirLight(glm::vec3 dir, glm::vec3 diffColor, glm::vec3 specColor, float intensity)
 	{
-		DirLight d(dir, diffColor, specColor, intensity, uiCollapse);
+		DirLight d(dir, diffColor, specColor, intensity, true);
 		m_dirLights.push_back(d);
 	}
 
@@ -95,7 +96,36 @@ public:
 	float getDLIntensity(size_t i) const { return m_dirLights[i].intensity; }
 	bool getDLCollapse(size_t i) const { return m_dirLights[i].guicollapse; }
 
-	
+	void addSpotLight(glm::vec3 pos, glm::vec3 dir, glm::vec3 dif, glm::vec3 spec, float extA, float intA, float intensity)
+	{
+		SpotLight s(pos, dir, dif, spec, intensity, extA, intA, intensity, true);
+		m_spotLight.push_back(s);
+	}
+
+	void removeSpotLight(size_t i)
+	{
+		m_spotLight.erase(m_spotLight.begin() + i);
+	}
+
+	unsigned int getNumSpotLight() const { return m_spotLight.size(); }
+
+	void setSPLPosition(size_t i, glm::vec3 pos) { m_spotLight[i].pos = pos; }
+	void setSPLDirection(size_t i, glm::vec3 dir) { m_spotLight[i].dir = dir; }
+	void setSPLDiffuse(size_t i, glm::vec3 col) { m_spotLight[i].diffcolor = col; }
+	void setSPLSpec(size_t i, glm::vec3 col) { m_spotLight[i].speccolor = col; }
+	void setSPLIntensity(size_t i, float intensity) { m_spotLight[i].intensity = intensity; }
+	void setSPLExternalAngle(size_t i, float angle) { m_spotLight[i].extangle = angle; }
+	void setSPLInternalAngle(size_t i, float angle) { m_spotLight[i].intangle = angle; }
+	void setSPLCollapse(size_t i, bool col) { m_spotLight[i].guicollapse = col; }
+
+	glm::vec3 getSPLPosition(size_t i) const { return m_spotLight[i].pos; }
+	glm::vec3 getSPLDirection(size_t i) const { return m_spotLight[i].dir; }
+	glm::vec3 getSPLDiffuse(size_t i) const { return m_spotLight[i].diffcolor; }
+	glm::vec3 getSPLSpec(size_t i) const { return m_spotLight[i].speccolor; }
+	float getSPLIntensity(size_t i) const { return m_spotLight[i].intensity; }
+	float getSPLExternalAngle(size_t i) const { return m_spotLight[i].extangle; }
+	float getSPLInternalAngle(size_t i) const { return m_spotLight[i].intangle; }
+	bool getSPLCollapse(size_t i) const { return m_spotLight[i].guicollapse; }
 
 
 private:
