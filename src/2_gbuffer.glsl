@@ -17,13 +17,13 @@ out vec3 position;
 
 void main(void)
 {
-	vec4 new_position;
-	if (RenderLightModel == 1) {
+	vec4 new_position = vec4(VertexPosition.x + (gl_InstanceID%10), VertexPosition.y, VertexPosition.z + (gl_InstanceID/10), 1);
+	/*if (RenderLightModel == 1) {
 		new_position = vec4(VertexPosition.x, VertexPosition.y, VertexPosition.z, 1);
 	}
 	else {
 		new_position = vec4(VertexPosition.x + SpectrumOffset, VertexPosition.y + gl_InstanceID, VertexPosition.z, 1);
-	}
+	}*/
 	
 	normal = vec3(Object * vec4(VertexNormal, 1.0));
 	uv = VertexTexCoord;

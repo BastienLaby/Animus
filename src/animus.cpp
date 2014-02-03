@@ -57,7 +57,7 @@ int main( int argc, char **argv )
     // INITIALISATION
     //
 
-    int width = 512, height = 512;
+    int width = 1920, height = 1080;
     float widthf = (float) width, heightf = (float) height;
     double t;
     float fps = 0.f;
@@ -70,7 +70,7 @@ int main( int argc, char **argv )
     }
 
     // Open a window and create its OpenGL context
-    if( !glfwOpenWindow( width, height, 0,0,0,0, 24, 0, GLFW_WINDOW ) )
+    if( !glfwOpenWindow( width, height, 0,0,0,0, 24, 0, GLFW_FULLSCREEN ) )
     {
         fprintf( stderr, "Failed to open GLFW window\n" );
 
@@ -94,12 +94,18 @@ int main( int argc, char **argv )
     // Enable vertical sync (on cards that support it)
     glfwSwapInterval( 1 );
 
+    //
     // Init imgui
+    //
+
     init_imgui();
     GUIStates guiStates;
     init_gui_states(guiStates);
 
-    // Init viewer structures
+    //
+    // Init Cameras
+    //
+
     CameraManager cammg;
     int idCam1 = cammg.createCamera();
     int idCam2 = cammg.createCamera();
@@ -107,7 +113,7 @@ int main( int argc, char **argv )
     cammg.switchTo(idCam1);
 
     //
-    // OPENGL RESOURCES INITIALISATION
+    // Init textures
     //
 
     // Load images and upload textures
@@ -133,11 +139,15 @@ int main( int argc, char **argv )
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    //
     // Try to load and compile shader
+    //
+
+    // Gbuffer
+
     int status;
     ShaderGLSL gbuffer_shader;
     const char * shaderFileGBuffer = "src/2_gbuffer.glsl";
-    //int status = load_shader_from_file(gbuffer_shader, shaderFileGBuffer, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER | ShaderGLSL::GEOMETRY_SHADER);
     status = load_shader_from_file(gbuffer_shader, shaderFileGBuffer, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
     if ( status == -1 )
     {
@@ -145,7 +155,6 @@ int main( int argc, char **argv )
         exit( EXIT_FAILURE );
     }    
 
-    // Compute locations for gbuffer_shader
     GLuint gbuffer_projectionLocation = glGetUniformLocation(gbuffer_shader.program, "Projection");
     GLuint gbuffer_viewLocation = glGetUniformLocation(gbuffer_shader.program, "View");
     GLuint gbuffer_objectLocation = glGetUniformLocation(gbuffer_shader.program, "Object");
@@ -155,10 +164,10 @@ int main( int argc, char **argv )
     GLuint gbuffer_spectrumOffsetLocation = glGetUniformLocation(gbuffer_shader.program, "SpectrumOffset");
     GLuint gbuffer_renderLightModel = glGetUniformLocation(gbuffer_shader.program, "RenderLightModel");
 
-    // Load Blit shader
+    // Blit shader
+
     ShaderGLSL blit_shader;
     const char * shaderFileBlit = "src/2_blit.glsl";
-    //int status = load_shader_from_file(blit_shader, shaderFileBlit, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER | ShaderGLSL::GEOMETRY_SHADER);
     status = load_shader_from_file(blit_shader, shaderFileBlit, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
     if ( status == -1 )
     {
@@ -166,32 +175,79 @@ int main( int argc, char **argv )
         exit( EXIT_FAILURE );
     }    
 
-    // Compute locations for blit_shader
     GLuint blit_tex1Location = glGetUniformLocation(blit_shader.program, "Texture1");
 
-    // Load light accumulation shader
-    ShaderGLSL lighting_shader;
-    const char * shaderFileLighting = "src/2_light.glsl";
-    //int status = load_shader_from_file(lighting_shader, shaderFileLighting, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER | ShaderGLSL::GEOMETRY_SHADER);
-    status = load_shader_from_file(lighting_shader, shaderFileLighting, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
+    // Pointlight buffer
+
+    ShaderGLSL pointlight_shader;
+    const char * shaderPointLighting = "src/pointlight.glsl";
+    status = load_shader_from_file(pointlight_shader, shaderPointLighting, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
     if ( status == -1 )
     {
-        fprintf(stderr, "Error on loading  %s\n", shaderFileLighting);
+        fprintf(stderr, "Error on loading  %s\n", shaderPointLighting);
         exit( EXIT_FAILURE );
     }    
-    // Compute locations for lighting_shader
-    GLuint lighting_materialLocation = glGetUniformLocation(lighting_shader.program, "Material");
-    GLuint lighting_normalLocation = glGetUniformLocation(lighting_shader.program, "Normal");
-    GLuint lighting_depthLocation = glGetUniformLocation(lighting_shader.program, "Depth");
-    GLuint lighting_timeLocation = glGetUniformLocation(lighting_shader.program, "Time");
-    GLuint lighting_inverseViewProjectionLocation = glGetUniformLocation(lighting_shader.program, "InverseViewProjection");
-    GLuint lighting_cameraPositionLocation = glGetUniformLocation(lighting_shader.program, "CameraPosition");
-    GLuint lighting_lightPositionLocation = glGetUniformLocation(lighting_shader.program, "LightPosition");
-    GLuint lighting_lightDiffuseColorLocation = glGetUniformLocation(lighting_shader.program, "LightDiffuseColor");
-    GLuint lighting_lightSpecularColorLocation = glGetUniformLocation(lighting_shader.program, "LightSpecColor");
-    GLuint lighting_lightIntensityLocation = glGetUniformLocation(lighting_shader.program, "LightIntensity");
-    GLuint lighting_projectionLocation = glGetUniformLocation(lighting_shader.program, "Projection");
+
+    GLuint pointlight_materialLocation = glGetUniformLocation(pointlight_shader.program, "Material");
+    GLuint pointlight_normalLocation = glGetUniformLocation(pointlight_shader.program, "Normal");
+    GLuint pointlight_depthLocation = glGetUniformLocation(pointlight_shader.program, "Depth");
+    GLuint pointlight_timeLocation = glGetUniformLocation(pointlight_shader.program, "Time");
+    GLuint pointlight_inverseViewProjectionLocation = glGetUniformLocation(pointlight_shader.program, "InverseViewProjection");
+    GLuint pointlight_cameraPositionLocation = glGetUniformLocation(pointlight_shader.program, "CameraPosition");
+    GLuint pointlight_lightPositionLocation = glGetUniformLocation(pointlight_shader.program, "LightPosition");
+    GLuint pointlight_lightDiffuseColorLocation = glGetUniformLocation(pointlight_shader.program, "LightDiffuseColor");
+    GLuint pointlight_lightSpecularColorLocation = glGetUniformLocation(pointlight_shader.program, "LightSpecularColor");
+    GLuint pointlight_lightIntensityLocation = glGetUniformLocation(pointlight_shader.program, "LightIntensity");
+    GLuint pointlight_projectionLocation = glGetUniformLocation(pointlight_shader.program, "Projection");
     
+    // Directionnal buffer
+
+    ShaderGLSL dirlight_shader;
+    const char * shaderDirLighting = "src/dirlight.glsl";
+    status = load_shader_from_file(dirlight_shader, shaderDirLighting, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
+    if ( status == -1 )
+    {
+        fprintf(stderr, "Error on loading  %s\n", shaderDirLighting);
+        exit( EXIT_FAILURE );
+    }    
+
+    GLuint dirlight_materialLocation = glGetUniformLocation(dirlight_shader.program, "Material");
+    GLuint dirlight_normalLocation = glGetUniformLocation(dirlight_shader.program, "Normal");
+    GLuint dirlight_depthLocation = glGetUniformLocation(dirlight_shader.program, "Depth");
+    GLuint dirlight_timeLocation = glGetUniformLocation(dirlight_shader.program, "Time");
+    GLuint dirlight_inverseViewProjectionLocation = glGetUniformLocation(dirlight_shader.program, "InverseViewProjection");
+    GLuint dirlight_cameraPositionLocation = glGetUniformLocation(dirlight_shader.program, "CameraPosition");
+    GLuint dirlight_lightDirectionLocation = glGetUniformLocation(dirlight_shader.program, "LightDirection");
+    GLuint dirlight_lightDiffuseColorLocation = glGetUniformLocation(dirlight_shader.program, "LightDiffuseColor");
+    GLuint dirlight_lightSpecularColorLocation = glGetUniformLocation(dirlight_shader.program, "LightSpecularColor");
+    GLuint dirlight_lightIntensityLocation = glGetUniformLocation(dirlight_shader.program, "LightIntensity");
+    GLuint dirlight_projectionLocation = glGetUniformLocation(dirlight_shader.program, "Projection");
+
+    // Spotlight
+
+    ShaderGLSL spotlight_shader;
+    const char * shaderSpotLighting = "src/spotlight.glsl";
+    status = load_shader_from_file(spotlight_shader, shaderSpotLighting, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
+    if ( status == -1 )
+    {
+        fprintf(stderr, "Error on loading  %s\n", shaderSpotLighting);
+        exit( EXIT_FAILURE );
+    }    
+
+    /*GLuint spotlight_materialLocation = glGetUniformLocation(spotlight_shader.program, "Material");
+    GLuint spotlight_normalLocation = glGetUniformLocation(spotlight_shader.program, "Normal");
+    GLuint spotlight_depthLocation = glGetUniformLocation(spotlight_shader.program, "Depth");
+    GLuint spotlight_timeLocation = glGetUniformLocation(spotlight_shader.program, "Time");
+    GLuint spotlight_inverseViewProjectionLocation = glGetUniformLocation(spotlight_shader.program, "InverseViewProjection");
+    GLuint spotlight_cameraPositionLocation = glGetUniformLocation(spotlight_shader.program, "CameraPosition");
+    GLuint spotlight_lightPositionLocation = glGetUniformLocation(spotlight_shader.program, "LightPosition");
+    GLuint spotlight_lightDirectionLocation = glGetUniformLocation(spotlight_shader.program, "LightDirection");
+    GLuint spotlight_lightDiffuseColorLocation = glGetUniformLocation(spotlight_shader.program, "LightDiffuseColor");
+    GLuint spotlight_lightSpecularColorLocation = glGetUniformLocation(spotlight_shader.program, "LightSpecColor");
+    GLuint spotlight_lightIntensityLocation = glGetUniformLocation(spotlight_shader.program, "LightIntensity");
+    GLuint spotlight_lightExternalAngleLocation = glGetUniformLocation(spotlight_shader.program, "LightExternalAngle");
+    GLuint spotlight_lightInternalAngleLocation = glGetUniformLocation(spotlight_shader.program, "LightInternalAngle");
+    GLuint spotlight_projectionLocation = glGetUniformLocation(spotlight_shader.program, "Projection");*/
 
     // Load geometry
     int   cube_triangleCount = 12;
@@ -202,6 +258,11 @@ int main( int argc, char **argv )
     int   quad_triangleCount = 2;
     int   quad_triangleList[] = {0, 1, 2, 2, 1, 3}; 
     float quad_vertices[] =  {-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0};
+    int   plane_triangleCount = 2;
+    int   plane_triangleList[] = {0, 1, 2, 2, 1, 3}; 
+    float plane_uvs[] = {0.f, 0.f, 0.f, 10.f, 10.f, 0.f, 10.f, 10.f};
+    float plane_vertices[] = {-50.0, -1.0, 50.0, 50.0, -1.0, 50.0, -50.0, -1.0, -50.0, 50.0, -1.0, -50.0};
+    float plane_normals[] = {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0};
 
     // Vertex Array Object
     GLuint vao[3];
@@ -231,6 +292,27 @@ int main( int argc, char **argv )
     glEnableVertexAttribArray(2);
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*2, (void*)0);
     glBufferData(GL_ARRAY_BUFFER, sizeof(cube_uvs), cube_uvs, GL_STATIC_DRAW);
+
+    // Plane
+    glBindVertexArray(vao[1]);
+    // Bind indices and upload data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[4]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(plane_triangleList), plane_triangleList, GL_STATIC_DRAW);
+    // Bind vertices and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[5]);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(plane_vertices), plane_vertices, GL_STATIC_DRAW);
+    // Bind normals and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[6]);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(plane_normals), plane_normals, GL_STATIC_DRAW);
+    // Bind uv coords and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[7]);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*2, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(plane_uvs), plane_uvs, GL_STATIC_DRAW);
 
     // Quad
     glBindVertexArray(vao[2]);
@@ -320,10 +402,16 @@ int main( int argc, char **argv )
 
     int spaceKeyState = glfwGetKey(GLFW_KEY_SPACE);
 
+    lightManager.addDirLight(glm::vec3(0, -1, 0), glm::vec3(1, 1, 1), glm::vec3(1, 1, 0), 0.6f, true);
+
     do
     {
 
         t = glfwGetTime();
+
+        //
+        // Handle User inputs
+        //
 
         // Mouse states
         int leftButton = glfwGetMouseButton( GLFW_MOUSE_BUTTON_LEFT );
@@ -388,36 +476,33 @@ int main( int argc, char **argv )
             guiStates.lockPositionY = mousey;
         }
   
+        //
         // Get camera matrices
+        //
+
         glm::mat4 projection = glm::perspective(45.0f, widthf / heightf, 0.1f, 1000.f); 
         glm::mat4 worldToView = glm::lookAt(cammg.getEye(), cammg.getOrigin(), cammg.getUp());
         glm::mat4 objectToWorld;
         glm::mat4 worldToScreen = projection * worldToView;
         glm::mat4 screenToWorld = glm::transpose(glm::inverse(worldToScreen));
 
-        // Viewport 
+        //
+        // Render into framebuffer
+        //
+
         glViewport( 0, 0, width, height);
-
-        // Default states
         glEnable(GL_DEPTH_TEST);
-
-        // Clear the front buffer
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Bind gbuffer shader
+
         glUseProgram(gbuffer_shader.program);
         
-        // Upload uniforms
         glUniformMatrix4fv(gbuffer_projectionLocation, 1, 0, glm::value_ptr(projection));
         glUniformMatrix4fv(gbuffer_viewLocation, 1, 0, glm::value_ptr(worldToView));
         glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(objectToWorld));
         glUniform1i(gbuffer_diffuseLocation, 0);
         glUniform1i(gbuffer_specLocation, 1);
         glUniform1f(gbuffer_timeLocation, t);
-
-        //
-        // Remplissage du buffer personnalisé
-        //
 
         // Bind personnal buffer
         glBindFramebuffer(GL_FRAMEBUFFER, gbufferFbo);
@@ -426,47 +511,40 @@ int main( int argc, char **argv )
         // Activer la liste des buffers dans lesquels dessiner
         glDrawBuffers(2, gbufferDrawBuffers);
         
-        // Rendu : Bind textures
+        // Rendu
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textures[0]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textures[1]);
-        // Rendu : Dessin de la scène directement dans le personnal buffer bindé
+
         glBindVertexArray(vao[0]);
         
-        // Call glDrawElementsInstanced for each "bar"
         if(spectrumStepLoop < 3) { spectrumStepLoop++; }
         else { spectrumStepLoop = 0; }
-
         float spectrum[maxSpectrumSize];
         soundManager.getSpectrum(idSound1, spectrum, maxSpectrumSize); // Fill the max-size spectrum
-
-        // Then adapt to currentSpectrum
         float reduceSpectrum[256]; // To display a spectrum thiner than the max-size spectrum
-        int bar = 0;
+        int bar = 0;    
         for(unsigned int i = 0; i < 256; i++)
         {
             reduceSpectrum[i] = spectrum[i]*2000;
             int barHeight = (int)reduceSpectrum[i];
             if(barHeight < 1)
-                barHeight = 1;
-            /*if(barHeight > 250)
-            {
-                lightManager.addPointLight(glm::vec3(i, barHeight, 0), glm::vec3(1, 0, 0), glm::vec3(1, 1, 1), barHeight/10, false);
-            }*/
-                
+                barHeight = 1;                
             glUniform1i(gbuffer_spectrumOffsetLocation, bar);
             bar++;
-            glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, barHeight);    
+            //glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, barHeight);    
         }
 
-        // Draw lights
+        glBindVertexArray(vao[1]);
+        glDrawElements(GL_TRIANGLES, plane_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
+
+        // Draw lights representations
+        glBindVertexArray(vao[0]);
         glUniform1i(gbuffer_renderLightModel, 1);
         for(size_t i = 0; i < lightManager.getNumPointLight(); i++)
         {
-            glm::vec3 lastPos = lightManager.getPosition(i);
-            lightManager.setPosition(i, glm::vec3(lastPos.x, 50*cos(t+i), 10*sin(t+i)));
-            glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(glm::translate(objectToWorld, lightManager.getPosition(i))));
+            glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(glm::translate(objectToWorld, lightManager.getPLPosition(i))));
             glDrawElements(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
         }
         glUniform1i(gbuffer_renderLightModel, 0);
@@ -475,20 +553,15 @@ int main( int argc, char **argv )
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //
-        // Rendu de la scène avec plusieurs lumières
+        // Rendu de la scène dans un quad plein écran pour chaque lumière
         //
 
-        glUseProgram(lighting_shader.program);
+        glViewport( 0, 0, width, height);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_ONE, GL_ONE);
 
-        glUniformMatrix4fv(lighting_projectionLocation, 1, 0, glm::value_ptr(projection));
-        glUniform1i(lighting_materialLocation, 0);
-        glUniform1i(lighting_normalLocation, 1);
-        glUniform1i(lighting_depthLocation, 2);
-        glUniform3fv(lighting_cameraPositionLocation, 1, glm::value_ptr(cammg.getEye()));
-        glUniformMatrix4fv(lighting_inverseViewProjectionLocation, 1, 0, glm::value_ptr(screenToWorld));
-        glUniform1f(lighting_timeLocation, t);
-
-        // On bin les trois textures du framebuffer pour les utiliser dans le shader
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, gbufferTextures[0]);        
         glActiveTexture(GL_TEXTURE1);
@@ -496,29 +569,61 @@ int main( int argc, char **argv )
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, gbufferTextures[2]);
 
-        // On dessine un quad pour chaque lumière
-
-        glViewport( 0, 0, width, height);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glDisable(GL_DEPTH_TEST);
         glBindVertexArray(vao[2]);
 
-        glEnable(GL_BLEND);
-        glBlendFunc(GL_ONE, GL_ONE);
+        // Pointlights
+
+        glUseProgram(pointlight_shader.program);
+
+        glUniformMatrix4fv(pointlight_projectionLocation, 1, 0, glm::value_ptr(projection));
+        glUniform1i(pointlight_materialLocation, 0);
+        glUniform1i(pointlight_normalLocation, 1);
+        glUniform1i(pointlight_depthLocation, 2);
+        glUniform3fv(pointlight_cameraPositionLocation, 1, glm::value_ptr(cammg.getEye()));
+        glUniformMatrix4fv(pointlight_inverseViewProjectionLocation, 1, 0, glm::value_ptr(screenToWorld));
+        glUniform1f(pointlight_timeLocation, t);
+
         for (unsigned int i = 0; i < lightManager.getNumPointLight(); ++i)
         {
-            glm::vec3 pos = lightManager.getPosition(i);
-            glm::vec3 diff = lightManager.getDiffuse(i);
-            glm::vec3 spec = lightManager.getSpec(i);
+            glm::vec3 pos = lightManager.getPLPosition(i);
+            glm::vec3 diff = lightManager.getPLDiffuse(i);
+            glm::vec3 spec = lightManager.getPLSpec(i);
             float lightPosition[3] = {pos.x, pos.y, pos.z};
             float lightDiffuseColor[3] = {diff.r, diff.g, diff.b};
             float lightSpecColor[3] = {spec.r, spec.g, spec.b};
-            glUniform3fv(lighting_lightPositionLocation, 1, lightPosition);
-            glUniform3fv(lighting_lightDiffuseColorLocation, 1, lightDiffuseColor);
-            glUniform3fv(lighting_lightSpecularColorLocation, 1, lightSpecColor);
-            glUniform1f(lighting_lightIntensityLocation, lightManager.getIntensity(i));
+            glUniform3fv(pointlight_lightPositionLocation, 1, lightPosition);
+            glUniform3fv(pointlight_lightDiffuseColorLocation, 1, lightDiffuseColor);
+            glUniform3fv(pointlight_lightSpecularColorLocation, 1, lightSpecColor);
+            glUniform1f(pointlight_lightIntensityLocation, lightManager.getPLIntensity(i));
             glDrawElements(GL_TRIANGLES, quad_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
         }
+
+        // DirLights
+
+        glUseProgram(dirlight_shader.program);
+        glUniformMatrix4fv(dirlight_projectionLocation, 1, 0, glm::value_ptr(projection));
+        glUniform1i(dirlight_materialLocation, 0);
+        glUniform1i(dirlight_normalLocation, 1);
+        glUniform1i(dirlight_depthLocation, 2);
+        glUniform3fv(dirlight_cameraPositionLocation, 1, glm::value_ptr(cammg.getEye()));
+        glUniformMatrix4fv(dirlight_inverseViewProjectionLocation, 1, 0, glm::value_ptr(screenToWorld));
+        glUniform1f(dirlight_timeLocation, t);
+
+        for (unsigned int i = 0; i < lightManager.getNumDirLight(); ++i)
+        {
+            glm::vec3 dir = lightManager.getDLDirection(i);
+            glm::vec3 diff = lightManager.getDLDiffuse(i);
+            glm::vec3 spec = lightManager.getDLSpec(i);
+            float lightDirection[3] = {dir.x, dir.y, dir.z};
+            float lightDiffuseColor[3] = {diff.r, diff.g, diff.b};
+            float lightSpecColor[3] = {spec.r, spec.g, spec.b};
+            glUniform3fv(dirlight_lightDirectionLocation, 1, lightDirection);
+            glUniform3fv(dirlight_lightDiffuseColorLocation, 1, lightDiffuseColor);
+            glUniform3fv(dirlight_lightSpecularColorLocation, 1, lightSpecColor);
+            glUniform1f(dirlight_lightIntensityLocation, lightManager.getDLIntensity(i));
+            glDrawElements(GL_TRIANGLES, quad_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
+        }
+
         glDisable(GL_BLEND);
 
         //
@@ -568,7 +673,7 @@ int main( int argc, char **argv )
             imguiBeginFrame(mousex, mousey, mbut, mscroll);
             int logScroll = 0;
             char lineBuffer[512];
-            imguiBeginScrollArea("Deferred Shading", 0, height/4, 200, 3*height/4, &logScroll);
+            imguiBeginScrollArea("Animation", 0, height/4, 200, 3*height/4, &logScroll);
             sprintf(lineBuffer, "FPS %f", fps);
             imguiLabel(lineBuffer);
 
@@ -600,8 +705,10 @@ int main( int argc, char **argv )
             sprintf(lineBuffer, "One bar = %1.1f Hz", ((44100.f/2.f)/currentSpectrumSize));
             imguiLabel(lineBuffer);
 
-            imguiSeparatorLine();
-            sprintf(lineBuffer, "Ou  %f", fps);
+            imguiEndScrollArea();
+
+            imguiBeginScrollArea("Lights", 200, height/4, 200, 3*height/4, &logScroll);
+
             sprintf(lineBuffer, "%d PointLights", lightManager.getNumPointLight());
             imguiLabel(lineBuffer);
             int button_addPL = imguiButton("Add PointLight");
@@ -609,7 +716,7 @@ int main( int argc, char **argv )
             {
                 unsigned int nbL = lightManager.getNumPointLight();
                 srand(time(NULL));
-                lightManager.addPointLight( glm::vec3(nbL*10, 0, 0),
+                lightManager.addPointLight( glm::vec3(0, nbL*2, 5),
                                             glm::vec3(cos(nbL), sin(nbL), 1),
                                             glm::vec3(1, 1, 1),
                                             5.f,
@@ -621,45 +728,102 @@ int main( int argc, char **argv )
                 std::ostringstream ss;
                 ss << (i+1);
                 std::string s(ss.str());
-                int toggle = imguiCollapse("Point Light", s.c_str(), lightManager.getCollapse(i));
-                if(lightManager.getCollapse(i))
+                int toggle = imguiCollapse("Point Light", s.c_str(), lightManager.getPLCollapse(i));
+                if(lightManager.getPLCollapse(i))
                 {
                     imguiIndent();
-                        float intens = lightManager.getIntensity(i);
-                        imguiSlider("Intensity", &intens, 0, 100, 0.1); lightManager.setIntensity(i, intens);
+                        float intens = lightManager.getPLIntensity(i);
+                        imguiSlider("Intensity", &intens, 0, 10, 0.1); lightManager.setPLIntensity(i, intens);
                         imguiLabel("Position :");
                         imguiIndent();
-                            glm::vec3 pos = lightManager.getPosition(i);
+                            glm::vec3 pos = lightManager.getPLPosition(i);
                             imguiSlider("x", &pos.x, -10, 10, 0.01);
                             imguiSlider("y", &pos.y, -10, 10, 0.01);
                             imguiSlider("z", &pos.z, -10, 10, 0.01);
-                            lightManager.setPosition(i, pos);
+                            lightManager.setPLPosition(i, pos);
                         imguiUnindent();
                         imguiLabel("Diffuse :");
                         imguiIndent();
-                            glm::vec3 diff = lightManager.getDiffuse(i);
+                            glm::vec3 diff = lightManager.getPLDiffuse(i);
                             imguiSlider("r", &diff.x, 0, 1, 0.01);
                             imguiSlider("g", &diff.y, 0, 1, 0.01);
                             imguiSlider("b", &diff.z, 0, 1, 0.01);
-                            lightManager.setDiffuse(i, diff);
+                            lightManager.setPLDiffuse(i, diff);
                         imguiUnindent();
                         imguiLabel("Specular :");
                         imguiIndent();
-                            glm::vec3 spec = lightManager.getSpec(i);
+                            glm::vec3 spec = lightManager.getPLSpec(i);
                             imguiSlider("r", &spec.x, 0, 1, 0.01);
                             imguiSlider("g", &spec.y, 0, 1, 0.01);
                             imguiSlider("b", &spec.z, 0, 1, 0.01);
-                            lightManager.setSpec(i, spec);
+                            lightManager.setPLSpec(i, spec);
                         imguiUnindent();
                         int removeLight = imguiButton("Remove"); 
                         if(removeLight)
                             lightManager.removePointLight(i);
                     imguiUnindent();
                 }
-                if(toggle) { lightManager.setCollapse(i, !lightManager.getCollapse(i)); }
+                if(toggle) { lightManager.setPLCollapse(i, !lightManager.getPLCollapse(i)); }
+            }
+
+            imguiSeparatorLine();
+
+            int button_addDL = imguiButton("Add DirLight");
+            if(button_addDL)
+            {
+                unsigned int nbL = lightManager.getNumDirLight();
+                lightManager.addDirLight( glm::vec3(0.5, -0.5, -0.5),
+                                            glm::vec3(cos(nbL), sin(nbL), 1),
+                                            glm::vec3(1, 1, 1),
+                                            1.f,
+                                            false);
+            }
+
+            for (unsigned int i = 0; i < lightManager.getNumDirLight(); ++i)
+            {
+                std::ostringstream ss;
+                ss << (i+1);
+                std::string s(ss.str());
+                int toggle = imguiCollapse("Dir Light", s.c_str(), lightManager.getDLCollapse(i));
+                if(lightManager.getDLCollapse(i))
+                {
+                    imguiIndent();
+                        float intens = lightManager.getDLIntensity(i);
+                        imguiSlider("Intensity", &intens, 0, 10, 0.1); lightManager.setDLIntensity(i, intens);
+                        imguiLabel("Direction :");
+                        imguiIndent();
+                            glm::vec3 dir = lightManager.getDLDirection(i);
+                            imguiSlider("x", &dir.x, -10, 10, 0.01);
+                            imguiSlider("y", &dir.y, -10, 10, 0.01);
+                            imguiSlider("z", &dir.z, -10, 10, 0.01);
+                            lightManager.setDLDirection(i, dir);
+                        imguiUnindent();
+                        imguiLabel("Diffuse :");
+                        imguiIndent();
+                            glm::vec3 diff = lightManager.getDLDiffuse(i);
+                            imguiSlider("r", &diff.x, 0, 1, 0.01);
+                            imguiSlider("g", &diff.y, 0, 1, 0.01);
+                            imguiSlider("b", &diff.z, 0, 1, 0.01);
+                            lightManager.setDLDiffuse(i, diff);
+                        imguiUnindent();
+                        imguiLabel("Specular :");
+                        imguiIndent();
+                            glm::vec3 spec = lightManager.getDLSpec(i);
+                            imguiSlider("r", &spec.x, 0, 1, 0.01);
+                            imguiSlider("g", &spec.y, 0, 1, 0.01);
+                            imguiSlider("b", &spec.z, 0, 1, 0.01);
+                            lightManager.setDLSpec(i, spec);
+                        imguiUnindent();
+                        int removeLight = imguiButton("Remove"); 
+                        if(removeLight)
+                            lightManager.removeDirLight(i);
+                    imguiUnindent();
+                }
+                if(toggle) { lightManager.setDLCollapse(i, !lightManager.getDLCollapse(i)); }
             }
 
             imguiEndScrollArea();
+
             imguiEndFrame();
             
             imguiRenderGLDraw(width, height); 
