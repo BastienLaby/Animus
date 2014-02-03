@@ -48,7 +48,7 @@ public:
 
 	void addPointLight(glm::vec3 pos, glm::vec3 diffColor, glm::vec3 specColor, float intensity)
 	{
-		PointLight p(pos, diffColor, specColor, intensity, true);
+		PointLight p(pos, diffColor, specColor, intensity, false);
 		m_pointLights.push_back(p);
 	}
 

@@ -55,6 +55,7 @@ void main(void)
 {
 	// Recover fragment parameters
 	vec3 fragNormal = texture(Normal, uv).xyz;
+	fragNormal = fragNormal*2-1;
 	vec4 material = texture (Material, uv);
 		// Split material to recover diffuse & specular
 		vec3 fragDiffuse = material.xyz;
