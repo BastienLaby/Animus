@@ -23,8 +23,6 @@ Installation (linux only)
   > ./Animusd
 
 Coming soon features :
-  - Camera Managing [OK]
-  - Light Improvment (just pointLight for now)
   - Fullscreen switch button
   - Sound interface loading
 
