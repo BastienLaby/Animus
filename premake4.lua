@@ -31,6 +31,35 @@ solution "AnimusSolution"
          flags { "Optimize"}    
          targetsuffix "r"
 
+   -- Spectrum
+   project "Spectrum"
+      kind "ConsoleApp"
+      language "C++"
+      files { "src/spectrum.cpp"}
+      includedirs { "lib/glfw/include", "lib/fmod/inc", "src", "common", "lib/"}
+      links {"glfw", "glew", "stb", "imgui"}
+      libdirs {"lib/**"}
+      defines { "GLEW_STATIC" }
+     
+      configuration { "linux" }
+         links {"X11","Xrandr", "rt", "GL", "GLU", "pthread", "fmodex64"}
+       
+      configuration { "windows" }
+         links {"glu32","opengl32", "gdi32", "winmm", "user32"}
+
+      configuration { "macosx" }
+         linkoptions { "-framework OpenGL", "-framework Cocoa", "-framework IOKit" }
+       
+      configuration "Debug"
+         defines { "DEBUG" }
+         flags {"ExtraWarnings", "Symbols" }
+         targetsuffix "d"
+
+      configuration "Release"
+         defines { "NDEBUG" }
+         flags { "Optimize"}    
+         targetsuffix "r"
+
    -- GLFW Library
    project "glfw"
       kind "StaticLib"
