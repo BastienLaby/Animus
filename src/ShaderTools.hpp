@@ -12,7 +12,7 @@ struct ShaderGLSL
     GLuint program;
 };
 
-int compile_and_link_shader(ShaderGLSL & shader, int typeMask, const char * sourceBuffer, int bufferSize)
+int  compile_and_link_shader(ShaderGLSL & shader, int typeMask, const char * sourceBuffer, int bufferSize)
 {
     // Create program object
     shader.program = glCreateProgram();

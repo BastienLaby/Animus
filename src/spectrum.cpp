@@ -147,7 +147,7 @@ int main( int argc, char **argv )
 
     int status;
     ShaderGLSL gbuffer_shader;
-    const char * shaderFileGBuffer = "src/2_gbuffer.glsl";
+    const char * shaderFileGBuffer = "src/spectrum_gbuffer.glsl";
     status = load_shader_from_file(gbuffer_shader, shaderFileGBuffer, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
     if ( status == -1 )
     {

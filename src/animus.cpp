@@ -147,9 +147,9 @@ int main( int argc, char **argv )
 
     int status;
     ShaderGLSL gbuffer_shader;
-    const char * shaderFileGBuffer = "src/2_gbuffer.glsl";
-    status = load_shader_from_file(gbuffer_shader, shaderFileGBuffer, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::FRAGMENT_SHADER);
-    if ( status == -1 )
+    const char * shaderFileGBuffer = "src/animus_gbuffer.glsl";
+    status = load_shader_from_file(gbuffer_shader, shaderFileGBuffer, ShaderGLSL::VERTEX_SHADER | ShaderGLSL::GEOMETRY_SHADER| ShaderGLSL::FRAGMENT_SHADER);
+    if ( status == -1 ) 
     {
         fprintf(stderr, "Error on loading  %s\n", shaderFileGBuffer);
         exit( EXIT_FAILURE );
@@ -161,7 +161,6 @@ int main( int argc, char **argv )
     GLuint gbuffer_timeLocation = glGetUniformLocation(gbuffer_shader.program, "Time");
     GLuint gbuffer_diffuseLocation = glGetUniformLocation(gbuffer_shader.program, "Diffuse");
     GLuint gbuffer_specLocation = glGetUniformLocation(gbuffer_shader.program, "Spec");
-    GLuint gbuffer_spectrumOffsetLocation = glGetUniformLocation(gbuffer_shader.program, "SpectrumOffset");
     GLuint gbuffer_renderLightModel = glGetUniformLocation(gbuffer_shader.program, "RenderLightModel");
 
     // Blit shader
@@ -255,22 +254,103 @@ int main( int argc, char **argv )
     float cube_uvs[] = {0.f, 0.f, 0.f, 1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 0.f, 0.f, 1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 0.f, 0.f, 1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 0.f, 0.f, 1.f, 1.f, 0.f, 1.f, 1.f, 0.f, 0.f, 0.f, 1.f, 1.f, 0.f,  1.f, 0.f,  1.f, 1.f,  0.f, 1.f,  1.f, 1.f,  0.f, 0.f, 0.f, 0.f, 1.f, 1.f,  1.f, 0.f,  };
     float cube_vertices[] = {-0.5, -0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, 0.5, 0.5, -0.5, -0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, -0.5, -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5 };
     float cube_normals[] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, };
+    
     int   quad_triangleCount = 2;
     int   quad_triangleList[] = {0, 1, 2, 2, 1, 3}; 
     float quad_vertices[] =  {-1.0, -1.0, 1.0, -1.0, -1.0, 1.0, 1.0, 1.0};
+    
     int   plane_triangleCount = 2;
     int   plane_triangleList[] = {0, 1, 2, 2, 1, 3}; 
     float plane_uvs[] = {0.f, 0.f, 0.f, 10.f, 10.f, 0.f, 10.f, 10.f};
     float plane_vertices[] = {-50.0, -1.0, 50.0, 50.0, -1.0, 50.0, -50.0, -1.0, -50.0, 50.0, -1.0, -50.0};
     float plane_normals[] = {0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0};
 
+    //
+    // Load sphere geometry
+    //
+
+    GLfloat sphere_radius = 1;
+    GLsizei discLat = 20;
+    GLsizei discLong = 20;
+    GLfloat rcpLat = 1.f / discLat;
+    GLfloat rcpLong = 1.f / discLong;
+    GLfloat dPhi = 2 * M_PI * rcpLat;
+    GLfloat dTheta = M_PI * rcpLong;
+
+    // Fill sphere data
+    int tt;
+    // Construit l'ensemble des vertex
+    std::vector<glm::vec3> spherePositions;
+    std::vector<glm::vec3> sphereNormals;
+    std::vector<glm::vec2> sphereUv;
+    int sphere_nb_vertices = 0;
+    for(GLsizei j = 0; j <= discLong; ++j) {
+        GLfloat cosTheta = cos(-M_PI / 2 + j * dTheta);
+        GLfloat sinTheta = sin(-M_PI / 2 + j * dTheta);
+        for(GLsizei i = 0; i <= discLat; ++i) {
+            sphereUv.push_back(glm::vec2(i * rcpLat, 1.f - j * rcpLong));
+            glm::vec3 normal(sin(i * dPhi) * cosTheta, sinTheta, cos(i * dPhi) * cosTheta);
+            sphereNormals.push_back(normal);
+            spherePositions.push_back(sphere_radius * normal);
+            sphere_nb_vertices++;
+        }
+    }
+
+    float sphere_vertices[sphere_nb_vertices*3];
+    float sphere_uv[sphere_nb_vertices*2];
+    float sphere_normals[sphere_nb_vertices*3];
+    int sphere_triangleList[discLong * discLat * 6];
+    int sphere_triangleCount = discLong * discLat * 2;
+
+    tt = 0;
+    int uu = 0;
+    for(GLsizei i = 0; i < spherePositions.size(); ++i)
+    {
+        //fprintf(stdout, "pos %d : %f, %f, %f\n", i, spherePositions[i].x, spherePositions[i].y, spherePositions[i].z);
+        //fprintf(stdout, "normal : %f, %f, %f\n", sphereNormals[i].x, sphereNormals[i].y, sphereNormals[i].z);
+        //fprintf(stdout, "uv : %f, %f\n", sphereUv[i].x, sphereUv[i].y);
+
+        sphere_vertices[tt] = spherePositions[i].x;
+        sphere_normals[tt] = sphereNormals[i].x; tt++;
+        sphere_uv[uu] = sphereUv[i].x; uu++;
+
+        sphere_vertices[tt] = spherePositions[i].y; 
+        sphere_normals[tt] = sphereNormals[i].y; tt++;
+        sphere_uv[uu] = sphereUv[i].y; uu++;
+
+        sphere_vertices[tt] = spherePositions[i].z; 
+        sphere_normals[tt] = sphereNormals[i].z; tt++;
+    }
+
+    // Fill sphere index
+    tt = 0;
+    for(GLsizei j = 0; j < discLong; ++j) {
+        GLsizei offset = j * (discLat + 1);
+        for(GLsizei i = 0; i < discLat; ++i) {
+            
+            sphere_triangleList[tt] = offset + i;                       tt++;
+            sphere_triangleList[tt] = offset + (i + 1);                 tt++;
+            sphere_triangleList[tt] = offset + discLat + 1 + (i + 1);   tt++;
+            //fprintf(stdout, "%d, %d, %d\n", offset + i, offset + discLat + 1 + (i + 1), offset + i + discLat + 1);
+            sphere_triangleList[tt] = offset + i;                       tt++;
+            sphere_triangleList[tt] = offset + discLat + 1 + (i + 1);   tt++;
+            sphere_triangleList[tt] = offset + i + discLat + 1;         tt++;
+        }
+    }
+
+    /*float sphere_vertices[] = {-1.0, -0.5, 0, 0, 1, 0, 1.0, -0.5, 0};
+    float sphere_uv[] = {0.f, 0.f, 0.f, 0.f, 0.f, 0.f};
+    float sphere_normals[] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1};
+    int sphere_triangleList[] = {0, 1, 2}; 
+    int sphere_triangleCount = 1;*/
+
     // Vertex Array Object
-    GLuint vao[3];
-    glGenVertexArrays(3, vao);
+    GLuint vao[4];
+    glGenVertexArrays(4, vao);
 
     // Vertex Buffer Objects
-    GLuint vbo[12];
-    glGenBuffers(12, vbo);
+    GLuint vbo[14];
+    glGenBuffers(14, vbo);
 
     // Cube
     glBindVertexArray(vao[0]);
@@ -325,6 +405,28 @@ int main( int argc, char **argv )
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*2, (void*)0);
     glBufferData(GL_ARRAY_BUFFER, sizeof(quad_vertices), quad_vertices, GL_STATIC_DRAW);
 
+    // Sphere
+    glBindVertexArray(vao[3]);
+    // Bind indices and upload data
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vbo[10]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sphere_triangleList), sphere_triangleList, GL_STATIC_DRAW);
+    // Bind vertices and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[11]);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_vertices), sphere_vertices, GL_STATIC_DRAW);
+    // Bind normals and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[12]);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*3, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_normals), sphere_normals, GL_STATIC_DRAW);
+    // Bind uv coords and upload data
+    glBindBuffer(GL_ARRAY_BUFFER, vbo[13]);
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(GL_FLOAT)*2, (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(sphere_uv), sphere_uv, GL_STATIC_DRAW);
+
+
     // Unbind everything. Potentially illegal on some implementations
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -338,7 +440,6 @@ int main( int argc, char **argv )
     // Create color texture
     glBindTexture(GL_TEXTURE_2D, gbufferTextures[0]);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
-    //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -384,7 +485,7 @@ int main( int argc, char **argv )
     LightManager lightManager;
 
     // Animation Data
-    int spectrumStepLoop = 0;
+    float cubeInstanceCount = 1.f;
 
     // GUI Data
     bool showDeferrefTextures = false;
@@ -395,10 +496,8 @@ int main( int argc, char **argv )
     //
 
     SoundManager soundManager;
-    unsigned int idSound1 = soundManager.createSound("sounds/sound1.wav");
+    unsigned int idSound1 = soundManager.createSound("sounds/sound2.mp3");
     soundManager.playSound(idSound1);
-    unsigned int maxSpectrumSize = 1024;
-    unsigned int currentSpectrumSize = maxSpectrumSize;
 
     int spaceKeyState = glfwGetKey(GLFW_KEY_SPACE);
 
@@ -515,27 +614,11 @@ int main( int argc, char **argv )
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textures[1]);
 
-        glBindVertexArray(vao[0]);
+        //glBindVertexArray(vao[0]);
+        //glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, (int)cubeInstanceCount);
         
-        if(spectrumStepLoop < 3) { spectrumStepLoop++; }
-        else { spectrumStepLoop = 0; }
-        float spectrum[maxSpectrumSize];
-        soundManager.getSpectrum(idSound1, spectrum, maxSpectrumSize); // Fill the max-size spectrum
-        float reduceSpectrum[256]; // To display a spectrum thiner than the max-size spectrum
-        int bar = 0;    
-        for(unsigned int i = 0; i < 256; i++)
-        {
-            reduceSpectrum[i] = spectrum[i]*2000;
-            int barHeight = (int)reduceSpectrum[i];
-            if(barHeight < 1)
-                barHeight = 1;                
-            glUniform1i(gbuffer_spectrumOffsetLocation, bar);
-            bar++;
-            glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, barHeight);    
-        }
-
-        //glBindVertexArray(vao[1]);
-        //glDrawElements(GL_TRIANGLES, plane_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
+        glBindVertexArray(vao[3]);
+        glDrawElementsInstanced(GL_TRIANGLES, sphere_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, 1);
 
         // Draw lights representations
         glBindVertexArray(vao[0]);
@@ -725,14 +808,8 @@ int main( int argc, char **argv )
             if(buttonCamera3) {
                 cammg.switchTo(idCam3);
             }
-                
 
-            imguiSeparatorLine();
-
-            sprintf(lineBuffer, "Spectrum range : %d", 44100/2);
-            imguiLabel(lineBuffer);
-            sprintf(lineBuffer, "One bar = %1.1f Hz", ((44100.f/2.f)/currentSpectrumSize));
-            imguiLabel(lineBuffer);
+            imguiSlider("Cube Count", &cubeInstanceCount, 1, 300, 1);
 
             imguiEndScrollArea();
 
@@ -799,7 +876,6 @@ int main( int argc, char **argv )
             int button_addDL = imguiButton("Add DirLight");
             if(button_addDL)
             {
-                unsigned int nbL = lightManager.getNumDirLight();
                 lightManager.addDirLight( glm::vec3(0.5, -0.5, -0.5),
                                             glm::vec3(1, 1, 1),
                                             glm::vec3(1, 1, 0.5),
@@ -854,7 +930,6 @@ int main( int argc, char **argv )
             int button_addSPL = imguiButton("Add SpotLight");
             if(button_addSPL)
             {
-                unsigned int nbL = lightManager.getNumSpotLight();
                 lightManager.addSpotLight( glm::vec3(5, 5, 5),
                                             glm::vec3(-1, -1, -1),
                                             glm::vec3(1, 1, 0),
