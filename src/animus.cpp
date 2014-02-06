@@ -811,6 +811,9 @@ int main( int argc, char **argv )
 
             imguiSlider("Cube Count", &cubeInstanceCount, 1, 300, 1);
 
+            imguiSeparatorLine();
+
+
             imguiEndScrollArea();
 
             imguiBeginScrollArea("Lights", 200, height/4, 200, 3*height/4, &logScroll);

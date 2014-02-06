@@ -46,30 +46,46 @@ in vData
 
 }vertices[];
 
+uniform float Time;
+
 out fData
 {
 	vec2 uv;
     vec3 normal;
     vec3 position;
+    vec3 color;
 }frag;    
 
 void main()
 {
 
 	int n;
-	
 	for (n = 0; n < gl_in.length(); n++)
 	{
 		gl_Position = gl_in[n].gl_Position;
 		frag.normal = vertices[n].normal;
 		frag.position = vertices[n].position;
-		gl_Position.x += 3*cos(gl_PrimitiveIDIn) + gl_Position.x;
-		gl_Position.y += 3*sin(gl_PrimitiveIDIn) + gl_Position.y;
-		//gl_Position.z += gl_Position.z;
+		if(gl_PrimitiveIDIn%1 == 0)
+		{
+			gl_Position.x += cos((0.1*(gl_PrimitiveIDIn%4) * Time) + gl_PrimitiveIDIn);
+			gl_Position.y += sin((0.1*(gl_PrimitiveIDIn%4) * Time) + gl_PrimitiveIDIn);
+		}
+		frag.color = vec3(0, 0, 0);
+		if(gl_PrimitiveIDIn%2==0)
+		{
+			frag.color.r=1;	
+		}
+		if(gl_PrimitiveIDIn%3==0)
+		{
+			frag.color.g=1;	
+		}
+		if(gl_PrimitiveIDIn%7==0)
+		{
+			frag.color.b=1;	
+		}
 		EmitVertex();
 	}
 	EndPrimitive();
-
 }
 
 #endif
@@ -85,6 +101,7 @@ in fData
 	vec2 uv;
     vec3 normal;
     vec3 position;
+    vec3 color;
 }frag;
 
 uniform sampler2D Diffuse;
@@ -95,8 +112,8 @@ out vec4  Normal;
 
 void main(void)
 {
-	//Color = vec4(texture(Diffuse, frag.uv).rgb, texture(Spec, frag.uv).x);
-	Color = vec4(frag.position, 1);
+	Color = vec4(texture(Diffuse, frag.uv).rgb, texture(Spec, frag.uv).x);
+	//Color = vec4(frag.color, 1);
 	Normal = vec4(frag.normal, 1);
 
 }
