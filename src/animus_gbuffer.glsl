@@ -21,8 +21,13 @@ out vData
 void main(void)
 {
 
-	vec4 new_position = vec4(VertexPosition, 1.0);
-	new_position.x += 2*gl_InstanceID;
+	vec4 new_position;
+	// Rotate with a rotation matrix. The angle is based on the time.
+	float theta = 0.4*Time;
+	new_position.x = VertexPosition.x * cos(theta) - VertexPosition.z * sin(theta);
+	new_position.y = VertexPosition.y;
+	new_position.z = VertexPosition.x * sin(theta) + VertexPosition.z * cos(theta);
+	new_position.w = 1;
 
 	vertex.normal = vec3(Object * vec4((VertexNormal+1.0)*0.5, 1.0));
 	vertex.uv = VertexTexCoord;
@@ -56,33 +61,26 @@ out fData
     vec3 color;
 }frag;    
 
+float rand(vec2 n)
+{
+  return 0.5 + 0.5 * fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
+
 void main()
 {
 
 	int n;
+	float random = rand(vec2(gl_PrimitiveIDIn, gl_PrimitiveIDIn));
+	float random2 = rand(vec2(gl_PrimitiveIDIn+1, gl_PrimitiveIDIn));
+	float random3 = rand(vec2(gl_PrimitiveIDIn, gl_PrimitiveIDIn+1));
 	for (n = 0; n < gl_in.length(); n++)
 	{
 		gl_Position = gl_in[n].gl_Position;
 		frag.normal = vertices[n].normal;
 		frag.position = vertices[n].position;
-		if(gl_PrimitiveIDIn%1 == 0)
-		{
-			gl_Position.x += cos((0.1*(gl_PrimitiveIDIn%4) * Time) + gl_PrimitiveIDIn);
-			gl_Position.y += sin((0.1*(gl_PrimitiveIDIn%4) * Time) + gl_PrimitiveIDIn);
-		}
-		frag.color = vec3(0, 0, 0);
-		if(gl_PrimitiveIDIn%2==0)
-		{
-			frag.color.r=1;	
-		}
-		if(gl_PrimitiveIDIn%3==0)
-		{
-			frag.color.g=1;	
-		}
-		if(gl_PrimitiveIDIn%7==0)
-		{
-			frag.color.b=1;	
-		}
+		frag.uv = vertices[n].uv;
+		gl_Position.xy = gl_Position.xy * (random);
+		frag.color = vec3(random, random2, random3);
 		EmitVertex();
 	}
 	EndPrimitive();
@@ -112,10 +110,9 @@ out vec4  Normal;
 
 void main(void)
 {
-	Color = vec4(texture(Diffuse, frag.uv).rgb, texture(Spec, frag.uv).x);
-	//Color = vec4(frag.color, 1);
+	//Color = vec4(texture(Diffuse, frag.uv).rgb, texture(Spec, frag.uv).x);
+	Color = vec4(frag.color, 1);
 	Normal = vec4(frag.normal, 1);
-
 }
 
 #endif

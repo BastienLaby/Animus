@@ -270,8 +270,8 @@ int main( int argc, char **argv )
     //
 
     GLfloat sphere_radius = 1;
-    GLsizei discLat = 20;
-    GLsizei discLong = 20;
+    GLsizei discLat = 50;
+    GLsizei discLong = 50;
     GLfloat rcpLat = 1.f / discLat;
     GLfloat rcpLong = 1.f / discLong;
     GLfloat dPhi = 2 * M_PI * rcpLat;
@@ -614,21 +614,13 @@ int main( int argc, char **argv )
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textures[1]);
 
-        //glBindVertexArray(vao[0]);
-        //glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, (int)cubeInstanceCount);
+        // glBindVertexArray(vao[0]);
+        // glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, (int)cubeInstanceCount);
+        
+        // glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(glm::translate(objectToWorld, glm::vec3(5, 0, 0))));
         
         glBindVertexArray(vao[3]);
         glDrawElementsInstanced(GL_TRIANGLES, sphere_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, 1);
-
-        // Draw lights representations
-        glBindVertexArray(vao[0]);
-        glUniform1i(gbuffer_renderLightModel, 1);
-        for(size_t i = 0; i < lightManager.getNumPointLight(); i++)
-        {
-            glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(glm::translate(objectToWorld, lightManager.getPLPosition(i))));
-            glDrawElements(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0);
-        }
-        glUniform1i(gbuffer_renderLightModel, 0);
 
          // Debind personnal buffer
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
