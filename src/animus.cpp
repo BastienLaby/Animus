@@ -161,7 +161,7 @@ int main( int argc, char **argv )
     GLuint gbuffer_timeLocation = glGetUniformLocation(gbuffer_shader.program, "Time");
     GLuint gbuffer_diffuseLocation = glGetUniformLocation(gbuffer_shader.program, "Diffuse");
     GLuint gbuffer_specLocation = glGetUniformLocation(gbuffer_shader.program, "Spec");
-    GLuint gbuffer_renderLightModel = glGetUniformLocation(gbuffer_shader.program, "RenderLightModel");
+    GLuint gbuffer_primRotAngleLocation = glGetUniformLocation(gbuffer_shader.program, "PrimitiveRotationAngle");
 
     // Blit shader
 
@@ -486,6 +486,7 @@ int main( int argc, char **argv )
 
     // Animation Data
     float cubeInstanceCount = 1.f;
+    float primRotationAngle = 0.f;
 
     // GUI Data
     bool showDeferrefTextures = false;
@@ -618,7 +619,8 @@ int main( int argc, char **argv )
         // glDrawElementsInstanced(GL_TRIANGLES, cube_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, (int)cubeInstanceCount);
         
         // glUniformMatrix4fv(gbuffer_objectLocation, 1, 0, glm::value_ptr(glm::translate(objectToWorld, glm::vec3(5, 0, 0))));
-        
+        glUniform1f(gbuffer_primRotAngleLocation, primRotationAngle);
+
         glBindVertexArray(vao[3]);
         glDrawElementsInstanced(GL_TRIANGLES, sphere_triangleCount * 3, GL_UNSIGNED_INT, (void*)0, 1);
 
@@ -801,7 +803,9 @@ int main( int argc, char **argv )
                 cammg.switchTo(idCam3);
             }
 
-            imguiSlider("Cube Count", &cubeInstanceCount, 1, 300, 1);
+            imguiSlider("primRotationAngle", &primRotationAngle, 0, 2*M_PI, 0.01);
+
+
 
             imguiSeparatorLine();
 
